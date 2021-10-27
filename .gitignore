@@ -1,0 +1,11 @@
+paket-files/
+.paket/
+.config/
+
+src/Console/bin/
+src/Console/obj/
+
+src/FSharp.Data.Migrations/bin/
+src/FSharp.Data.Migrations/obj/
+
+.env
