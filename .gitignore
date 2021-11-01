@@ -2,6 +2,9 @@ paket-files/
 .paket/
 .config/
 
+.fake
+.ionide
+
 src/Console/bin/
 src/Console/obj/
 

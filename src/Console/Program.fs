@@ -3,29 +3,23 @@
 open System
 open Npgsql
 open FSharp.Data.Migrations
-open System.Data
 
 [<EntryPoint>]
 let main argv =
-  let results = Configuration.configure argv
+  let config = Configuration.configure argv
 
   // Get the base configuration
   Migrator.configure
   
   // Migrator find scripts folder
-  |> Migrator.transactionScope NoTransaction
-  |> printfn "Got parse result %O"
+  // |> Migrator.transactionScope Migrator.NoTransaction 
 
-  // TODO: Migrator read scripts
+  // Migrator read scripts
+  // |> Migrator.scriptsFolder "./migrations"
 
-  // TODO: Migrator ensure migrations table exists & check what has been run
-
-  // TODO: Create execution list
-
-  // TODO: Execute script and record it in migrations table
-
-  // TODO: On error, rollback and stop executing scripts
-
-  // TODO: Display run status
+  // Display run Result
+  |> Migrator.run (new NpgsqlConnection(config.ConnectionString))
+  
+  |> printfn "Got Run result: %A"
   
   0 // return an integer exit code

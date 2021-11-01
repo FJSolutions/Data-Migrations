@@ -2,11 +2,10 @@
 
 open System.Data
 open System.IO
-open System.Reflection
 
 module Migrator =
 
-  type TransactionScope =
+  type public TransactionScope =
     | PerScript
     | PerRun
     | NoTransaction
@@ -18,39 +17,45 @@ module Migrator =
 
   ///<summary>Creates a default configuration record.</summary>
   let configure =
-    let options = { 
-      ScriptFolder = "./scripts"
+    { 
+      ScriptFolder = Internal.normalizePath "../../../../../migrations"
       TransactionScope = PerScript
     }
-
-    (Assembly.GetEntryAssembly ()).Location
-    |> Directory.GetParent
-    |> printfn "%O"
-    
-    options
   
-  /// <summary>Sets the folder to look for SQL migration scripts in.</summary>
+  /// <summary>
+  /// Sets the folder to look for SQL migration scripts in.
+  /// (The default is a `migrations` folder in the project root)
+  /// </summary>
   let scriptsFolder folder (options: MigrationConfiguration) =
-    { options with ScriptFolder = folder }
+    { options with ScriptFolder = (Internal.normalizePath folder) }
     
   /// <summary>Sets the scope of transactions for when the migration scripts are run</summary>
   let transactionScope scope (options: MigrationConfiguration) =
     { options with TransactionScope = scope }
     
   ///<summary>Runs the migrations on the supplied database connection using the supplied migration options.</summary>
-  let run (connection: IDbConnection) (options: MigrationConfiguration) : Result<unit, string> =
-    // TODO: Verify the scripts folder exists 
+  let run (connection: IDbConnection) (options: MigrationConfiguration) : Result<_, string> =
+    ResultBuilder.result {
+      // use connection 
 
-    // TODO: Migrator read scripts
+      // Verify the scripts folder exists
+      let! result = Internal.checkScriptFolderExists options.ScriptFolder
 
-    // TODO: Migrator ensure migrations table exists & check what has been run
+      // Migrator read scripts
+      let! result = Internal.getScriptFiles result
 
-    // TODO: Create execution list
+      // TODO: Migrator ensure migrations table exists & check what has been run
 
-    // TODO: Execute script and record it in migrations table
+      // TODO: Create execution list
 
-    // TODO: On error, rollback and stop executing scripts
+      // TODO: Execute script and record it in migrations table
 
-    // TODO: Display run status
+      // TODO: On error, rollback and stop executing scripts
 
-    Error "'Run' Not Implemented"
+      // TODO: Return run status
+
+      // connection.Dispose ()
+
+      return result
+    } 
+    
