@@ -1,25 +1,18 @@
 ﻿namespace FSharp.Data.Migrations
 
-open System.Data
-open System.IO
 
 module Migrator =
 
-  type public TransactionScope =
-    | PerScript
-    | PerRun
-    | NoTransaction
-
-  type MigrationConfiguration = {
-    ScriptFolder: string
-    TransactionScope: TransactionScope
-  }
+  open System.Data
 
   ///<summary>Creates a default configuration record.</summary>
   let configure =
     { 
       ScriptFolder = Internal.normalizePath "../../../../../migrations"
       TransactionScope = PerScript
+      Database = PostgreSQL()
+      DbSchema = Some "public"
+      DbMigrationsTableName = "migrations"
     }
   
   /// <summary>
@@ -32,29 +25,50 @@ module Migrator =
   /// <summary>Sets the scope of transactions for when the migration scripts are run</summary>
   let transactionScope scope (options: MigrationConfiguration) =
     { options with TransactionScope = scope }
+
+  let dbSchema schema (options: MigrationConfiguration) =
+    { options with DbSchema = schema}
+
+  let dbMigrationsTableName tableName (options: MigrationConfiguration) =
+    { options with DbMigrationsTableName = tableName}
     
   ///<summary>Runs the migrations on the supplied database connection using the supplied migration options.</summary>
   let run (connection: IDbConnection) (options: MigrationConfiguration) : Result<_, string> =
     ResultBuilder.result {
-      // use connection 
-
       // Verify the scripts folder exists
       let! result = Internal.checkScriptFolderExists options.ScriptFolder
 
-      // Migrator read scripts
-      let! result = Internal.getScriptFiles result
+      // Read migration scripts
+      let! scripts = Internal.getScriptFiles result
 
-      // TODO: Migrator ensure migrations table exists & check what has been run
+      // Ensure the migrations table exists & check what has been run
+      let! result = DbRunner.runCheckMigrationsTableExists options connection
 
-      // TODO: Create execution list
+      // Create execution list
+      let! result =
+        if result then 
+          Ok true
+        else
+          DbRunner.runCreateMigrationsTable options connection
 
-      // TODO: Execute script and record it in migrations table
+      // Get the list of already executed scripts
+      let! result = DbRunner.runGetMigrations options connection
+      let scripts = List.except scripts result
+                    |> List.map Internal.normalizePath
+
+      printfn "%A" scripts
+
+      // TODO: Remove the existing scripts from the list
+
+      // TODO: Execute script 
+      
+      // TODO: Record it in migrations table
 
       // TODO: On error, rollback and stop executing scripts
 
       // TODO: Return run status
 
-      // connection.Dispose ()
+      connection.Dispose ()
 
       return result
     } 

@@ -7,7 +7,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Internal.fs" />
+    <Compile Include="Types.fs" />
     <Compile Include="ResultBuilder.fs" />
+    <Compile Include="PostgresProvider.fs" />
+    <Compile Include="DbRunner.fs" />
     <Compile Include="Library.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
