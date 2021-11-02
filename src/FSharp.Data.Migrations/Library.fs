@@ -53,12 +53,12 @@ module Migrator =
 
       // Get the list of already executed scripts
       let! result = DbRunner.runGetMigrations options connection
-      let scripts = List.except scripts result
-                    |> List.map Internal.normalizePath
-
-      printfn "%A" scripts
 
       // TODO: Remove the existing scripts from the list
+      let scripts = List.except result scripts 
+                    |> List.map Internal.normalizePath
+
+      // TODO: Loop the scripts
 
       // TODO: Execute script 
       
