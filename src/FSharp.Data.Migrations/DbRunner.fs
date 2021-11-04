@@ -24,7 +24,7 @@ module DbRunner =
 
   let runCreateMigrationsTable (options:MigrationConfiguration) (con:IDbConnection) : Result<bool, string> =
     try
-      let sql = options.Database.CreateMigrationsTable
+      let sql = options.Database.CreateMigrationsTable options
 
       if con.State = ConnectionState.Closed then
         con.Open ()

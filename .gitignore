@@ -11,4 +11,6 @@ src/Console/obj/
 src/FSharp.Data.Migrations/bin/
 src/FSharp.Data.Migrations/obj/
 
+src/Tests/
+
 .env
