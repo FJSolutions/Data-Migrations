@@ -6,6 +6,7 @@
     <WarnOn>3390;$(WarnOn)</WarnOn>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="StringBuilder.fs" />
     <Compile Include="Internal.fs" />
     <Compile Include="Types.fs" />
     <Compile Include="ResultBuilder.fs" />

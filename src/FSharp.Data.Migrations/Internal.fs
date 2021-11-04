@@ -29,3 +29,7 @@ module internal Internal =
     |> List.sortBy (fun f -> f.Name)
     |> List.map (fun f -> f.Name)
     |> Ok
+
+  let logWriter (writer:TextWriter) (message:string) =
+    let writer = if not (isNull writer) then writer else TextWriter.Null
+    writer.WriteLine message

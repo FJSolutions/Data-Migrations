@@ -9,7 +9,7 @@ let main argv =
   let config = Configuration.configure argv
 
   // Get the base configuration
-  Migrator.configure
+  Migrator.configure ()
   
   // Migrator find scripts folder
   // |> Migrator.transactionScope Migrator.NoTransaction 
@@ -18,7 +18,7 @@ let main argv =
   // |> Migrator.scriptsFolder "./migrations"
 
   // Display run Result
-  |> Migrator.run (new NpgsqlConnection(config.ConnectionString))
+  |> Migrator.run (new NpgsqlConnection (config.ConnectionString))
   
   |> printfn "Got Run result: %A"
   

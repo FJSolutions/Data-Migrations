@@ -1,6 +1,7 @@
 namespace FSharp.Data.Migrations
 
 open System.Data
+open System.IO
 
 type public TransactionScope =
 | PerScript
@@ -8,6 +9,7 @@ type public TransactionScope =
 | NoTransaction
 
 type MigrationConfiguration = {
+  LogWriter: TextWriter 
   ScriptFolder: string
   TransactionScope: TransactionScope
   Database: IMigrationDbProvider
@@ -29,8 +31,11 @@ and
   /// <returns>The SQL to return to get all the migrations that have already been run.</returns>
   abstract member GetMigrations : MigrationConfiguration -> string
   
-  /// <summary>Records a migration in the database</summary>
-  /// <returns>The SQL to return when a migration has been run and must be recorded in the migrations table.</returns>
+  /// <summary>
+  /// Records a migration in the database.
+  /// The parameter for the script file name must be called `@ScriptName`.
+  /// </summary>
+  /// <returns>The SQL to run when a migration has successfully been executed, to record the script in the migrations table.</returns>
   abstract member RecordMigration : MigrationConfiguration -> string
 
   

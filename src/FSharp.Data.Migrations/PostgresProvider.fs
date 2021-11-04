@@ -1,39 +1,37 @@
 namespace FSharp.Data.Migrations
-open System.Data
-open System.Text
+
+module sb = FSharp.Text.StringBuilder
 
 type PostgreSQL () =
-  
   interface IMigrationDbProvider with
     member __.CheckMigrationsTableExists options =
-      let sql = "SELECT COUNT(*) FROM information_schema.tables "
-      match options.DbSchema with 
-      | Some _ -> sql + "WHERE table_schema = @SchemaName AND table_name = @TableName;"
-      | None -> sql + "WHERE table_name = @TableName; "
+      sb.create ()
+      |> sb.add "SELECT COUNT(*) FROM information_schema.tables "
+      |> sb.addSomeF "WHERE table_schema =  '%s' " options.DbSchema
+      |> sb.addFIf options.DbSchema.IsSome "AND table_name = '%s' " options.DbMigrationsTableName
+      |> sb.addFIf (not options.DbSchema.IsSome) "WHERE table_name = '%s' " options.DbMigrationsTableName
+      |> sb.toString
 
     member __.CreateMigrationsTable options =
-        let sql = StringBuilder()
-        sql.Append "CREATE TABLE " |> ignore
-        if options.DbSchema.IsSome then
-          sql.Append options.DbSchema.Value |> ignore
-          sql.Append "." |> ignore
-        sql.Append options.DbMigrationsTableName |> ignore  
-        sql.Append "( script varchar(1024) NOT NULL, created_at timestamp with time zone DEFAULT now() ) " |> ignore
-
-        sql.ToString ()
-
+      sb.create ()
+      |> sb.add "CREATE TABLE "
+      |> sb.addSomeF "%s." options.DbSchema
+      |> sb.add options.DbMigrationsTableName
+      |> sb.add "( script varchar(1024) NOT NULL, created_at timestamp with time zone DEFAULT now() ) "
+      |> sb.toString
           
     member __.GetMigrations options =
-      let sql = StringBuilder()
-      sql.Append "SELECT script FROM " |> ignore
-      if options.DbSchema.IsSome then
-        sql.Append options.DbSchema.Value |> ignore
-        sql.Append "." |> ignore
-      sql.Append options.DbMigrationsTableName |> ignore  
-      sql.Append " ORDER BY script" |> ignore
-
-      sql.ToString ()
-
+      sb.create ()
+      |> sb.add "SELECT script FROM "
+      |> sb.addSomeF "%s." options.DbSchema
+      |> sb.add options.DbMigrationsTableName
+      |> sb.add " ORDER BY script" 
+      |> sb.toString
 
     member __.RecordMigration options =
-      failwith "Not implemented yet"
+      sb.create ()
+      |> sb.add"INSERT INTO "
+      |> sb.addSomeF "%s." options.DbSchema
+      |> sb.add options.DbMigrationsTableName
+      |> sb.add " script, created_at VALUES(@ScriptName, now() );"
+      |> sb.toString

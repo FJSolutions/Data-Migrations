@@ -1,19 +1,28 @@
 ﻿namespace FSharp.Data.Migrations
 
+open System
+open System.IO
+
 
 module Migrator =
 
   open System.Data
 
   ///<summary>Creates a default configuration record.</summary>
-  let configure =
+  let configure () =
     { 
+      LogWriter = Console.Out
       ScriptFolder = Internal.normalizePath "../../../../../migrations"
       TransactionScope = PerScript
       Database = PostgreSQL()
       DbSchema = Some "public"
       DbMigrationsTableName = "migrations"
     }
+  
+  /// Sets the output stream for writing migration messages to.
+  /// (The default is `stdout`)
+  let outputWriter (writer: TextWriter) (options:MigrationConfiguration) =
+    { options with LogWriter = writer }
   
   /// <summary>
   /// Sets the folder to look for SQL migration scripts in.
@@ -34,9 +43,12 @@ module Migrator =
     
   ///<summary>Runs the migrations on the supplied database connection using the supplied migration options.</summary>
   let run (connection: IDbConnection) (options: MigrationConfiguration) : Result<_, string> =
+    let writer = Internal.logWriter options.LogWriter
+    
     ResultBuilder.result {
       // Verify the scripts folder exists
       let! result = Internal.checkScriptFolderExists options.ScriptFolder
+      writer (sprintf "A migration-scripts folder was found at: '%O'" result)
 
       // Read migration scripts
       let! scripts = Internal.getScriptFiles result
@@ -45,7 +57,7 @@ module Migrator =
       let! result = DbRunner.runCheckMigrationsTableExists options connection
 
       // Create execution list
-      let! result =
+      let! _ =
         if result then 
           Ok true
         else
@@ -54,9 +66,11 @@ module Migrator =
       // Get the list of already executed scripts
       let! result = DbRunner.runGetMigrations options connection
 
-      // TODO: Remove the existing scripts from the list
-      let scripts = List.except result scripts 
-                    |> List.map Internal.normalizePath
+      // Remove the existing scripts from the list
+      let scripts = 
+        List.except result scripts 
+        |> List.map Internal.normalizePath
+      writer (sprintf "%i script(s) were found to run" (List.length scripts))
 
       // TODO: Loop the scripts
 
