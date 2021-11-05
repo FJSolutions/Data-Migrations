@@ -6,13 +6,20 @@ module ResultBuilder =
 
   let (>>=) m f = bind f m
 
-  type ResultBuilder() =
+  type ResultBuilder () =
     member __.Return x = Ok x
 
     member __.ReturnFrom (m:Result<_,_>) = m
 
-    member __.Bind(m, f) = bind f m
+    member __.Bind (m, f) = bind f m
 
-    member __.Zero = Ok ()
+    member __.Zero () = Ok ()
+
+    member __.TryFinally (body, f) =
+      try
+        __.ReturnFrom (body ())
+      finally
+        f () 
+    member __.Delay (f) = f ()
 
   let result = ResultBuilder()

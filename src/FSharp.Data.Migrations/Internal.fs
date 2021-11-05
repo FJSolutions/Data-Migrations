@@ -19,15 +19,14 @@ module internal Internal =
     Path.GetFullPath basePath
 
   let checkScriptFolderExists (path:string) =
-    match Directory.Exists path with
+    match (Directory.Exists path) with
     | true -> Ok (DirectoryInfo path)
     | false -> Error $"The scripts folder (%s{path}) doesn't exist!"
 
-  let getScriptFiles (folder:DirectoryInfo) : Result<string list, _> =
+  let getScriptFiles (folder:DirectoryInfo) : Result<FileInfo list, string> =
     folder.GetFiles("*.sql")
     |> Array.toList
     |> List.sortBy (fun f -> f.Name)
-    |> List.map (fun f -> f.Name)
     |> Ok
 
   let logWriter (writer:TextWriter) (message:string) =

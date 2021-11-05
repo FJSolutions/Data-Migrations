@@ -44,10 +44,11 @@ module Migrator =
   ///<summary>Runs the migrations on the supplied database connection using the supplied migration options.</summary>
   let run (connection: IDbConnection) (options: MigrationConfiguration) : Result<_, string> =
     let writer = Internal.logWriter options.LogWriter
+    writer "\n# Running Migrations\n"
     
     ResultBuilder.result {
       // Verify the scripts folder exists
-      let! result = Internal.checkScriptFolderExists options.ScriptFolder
+      let! result = Internal.checkScriptFolderExists (options.ScriptFolder)
       writer (sprintf "A migration-scripts folder was found at: '%O'" result)
 
       // Read migration scripts
@@ -55,34 +56,27 @@ module Migrator =
 
       // Ensure the migrations table exists & check what has been run
       let! result = DbRunner.runCheckMigrationsTableExists options connection
-
+      
       // Create execution list
       let! _ =
         if result then 
           Ok true
         else
           DbRunner.runCreateMigrationsTable options connection
-
+          
       // Get the list of already executed scripts
       let! result = DbRunner.runGetMigrations options connection
 
       // Remove the existing scripts from the list
-      let scripts = 
-        List.except result scripts 
-        |> List.map Internal.normalizePath
+      let scripts = List.filter (fun (r:FileInfo) -> not (List.exists (fun f -> r.Name = f) result)) scripts 
       writer (sprintf "%i script(s) were found to run" (List.length scripts))
-
-      // TODO: Loop the scripts
-
-      // TODO: Execute script 
       
-      // TODO: Record it in migrations table
-
-      // TODO: On error, rollback and stop executing scripts
-
-      // TODO: Return run status
-
+      // Loop the scripts
+      let! result = DbScriptRunner.runMigrations options connection writer scripts
+      
+      // Cleanup the database connection
       connection.Dispose ()
+      writer "Successfully ran migrations."
 
       return result
     } 

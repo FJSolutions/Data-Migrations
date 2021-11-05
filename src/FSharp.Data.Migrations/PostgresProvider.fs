@@ -33,5 +33,5 @@ type PostgreSQL () =
       |> sb.add"INSERT INTO "
       |> sb.addSomeF "%s." options.DbSchema
       |> sb.add options.DbMigrationsTableName
-      |> sb.add " script, created_at VALUES(@ScriptName, now() );"
+      |> sb.add " (script, created_at) VALUES(@ScriptName, now() );"
       |> sb.toString
