@@ -1,18 +1,22 @@
 ﻿namespace FSharp.Data.Migrations
 
 open System
+open System.Data
 open System.IO
 
 
 module Migrator =
+  let private printError writer result =
+    match result with
+    | Ok _ -> ()
+    | Error e -> writer e
 
-  open System.Data
-
-  ///<summary>Creates a default configuration record.</summary>
-  let configure () =
+  ///Creates a default configuration record.
+  let configure () : MigrationConfiguration =
     { 
       LogWriter = Console.Out
       ScriptFolder = Internal.normalizePath "../../../../../migrations"
+      ScriptFilterPattern = "*.sql"
       TransactionScope = PerScript
       Database = PostgreSQL()
       DbSchema = Some "public"
@@ -24,35 +28,43 @@ module Migrator =
   let outputWriter (writer: TextWriter) (options:MigrationConfiguration) =
     { options with LogWriter = writer }
   
-  /// <summary>
   /// Sets the folder to look for SQL migration scripts in.
-  /// (The default is a `migrations` folder in the project root)
-  /// </summary>
+  /// (The default is a `migrations` folder in the project root, i.e. four levels from the folder where the Entry Assembly is executing)
   let scriptsFolder folder (options: MigrationConfiguration) =
     { options with ScriptFolder = (Internal.normalizePath folder) }
+
+  /// Sets the file filter patter for files in the migration scripts folder
+  /// (The default is `*.sql`)
+  let scriptsFileFilter filterPattern (options: MigrationConfiguration) =
+    { options with ScriptFilterPattern = filterPattern }
     
-  /// <summary>Sets the scope of transactions for when the migration scripts are run</summary>
-  let transactionScope scope (options: MigrationConfiguration) =
+  /// Sets the scope of transactions for when the migration scripts are run.
+  /// (The default is `transaction per script`)
+  let transactionScope scope ( options: MigrationConfiguration ) =
     { options with TransactionScope = scope }
 
+  /// Sets the default database schema
+  /// (The default is `public`)
   let dbSchema schema (options: MigrationConfiguration) =
     { options with DbSchema = schema}
 
+ /// Sets the name of the migrations table where executed scripts are stored
+ /// (The default is `migrations)
   let dbMigrationsTableName tableName (options: MigrationConfiguration) =
     { options with DbMigrationsTableName = tableName}
     
-  ///<summary>Runs the migrations on the supplied database connection using the supplied migration options.</summary>
-  let run (connection: IDbConnection) (options: MigrationConfiguration) : Result<_, string> =
+  ///Runs the migrations on the supplied database connection using the supplied migration options.
+  let run (connection: IDbConnection) (options: MigrationConfiguration) =
     let writer = Internal.logWriter options.LogWriter
     writer "\n# Running Migrations\n"
     
-    ResultBuilder.result {
+    let result = ResultBuilder.result {
       // Verify the scripts folder exists
       let! result = Internal.checkScriptFolderExists (options.ScriptFolder)
-      writer (sprintf "A migration-scripts folder was found at: '%O'" result)
+      // writer (sprintf "A migration-scripts folder was found at: '%O'" result)
 
       // Read migration scripts
-      let! scripts = Internal.getScriptFiles result
+      let! scripts = Internal.getScriptFiles options.ScriptFilterPattern result
 
       // Ensure the migrations table exists & check what has been run
       let! result = DbRunner.runCheckMigrationsTableExists options connection
@@ -76,8 +88,10 @@ module Migrator =
       
       // Cleanup the database connection
       connection.Dispose ()
-      writer "Successfully ran migrations."
+      writer "Successfully ran migrations.\n"
 
       return result
     } 
-    
+
+    // Prints any errors that were generated
+    printError writer result

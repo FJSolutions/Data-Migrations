@@ -20,6 +20,4 @@ let main argv =
   // Display run Result
   |> Migrator.run (new NpgsqlConnection (config.ConnectionString))
   
-  |> printfn "Got Run result: %A"
-  
   0 // return an integer exit code

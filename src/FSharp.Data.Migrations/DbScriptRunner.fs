@@ -60,7 +60,7 @@ module DbScriptRunner =
         // Record it in migrations table
         let! _ = DbRunner.runRecordMigration options con file.Name
 
-        writer (sprintf "Migrated script file: %s" file.Name)
+        writer (sprintf "Ran migration script: %s" file.Name)
 
         return true
       else

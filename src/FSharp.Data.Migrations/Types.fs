@@ -14,6 +14,7 @@ type public TransactionScope =
 type MigrationConfiguration = {
   LogWriter: TextWriter 
   ScriptFolder: string
+  ScriptFilterPattern: string
   TransactionScope: TransactionScope
   Database: IMigrationDbProvider
   DbSchema: string option

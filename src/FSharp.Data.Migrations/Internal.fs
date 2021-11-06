@@ -23,8 +23,8 @@ module internal Internal =
     | true -> Ok (DirectoryInfo path)
     | false -> Error $"The scripts folder (%s{path}) doesn't exist!"
 
-  let getScriptFiles (folder:DirectoryInfo) : Result<FileInfo list, string> =
-    folder.GetFiles("*.sql")
+  let getScriptFiles (filter:string) (folder:DirectoryInfo) : Result<FileInfo list, string> =
+    folder.GetFiles(filter)
     |> Array.toList
     |> List.sortBy (fun f -> f.Name)
     |> Ok
