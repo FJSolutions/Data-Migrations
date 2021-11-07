@@ -11,7 +11,7 @@ module DbScriptRunner =
       let sql = (file.OpenText ()).ReadToEnd ()
       Ok sql
     with | e ->
-      Error (sprintf "Error reading script file (%s): %s" file.Name e.Message)
+      Error <| sprintf "Error reading script file (%s): %s" file.Name e.Message
 
 
   let private executeMigration (con:IDbConnection) sql = 

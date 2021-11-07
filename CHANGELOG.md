@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Coloured console output
   - Make the `log writer` more sophisticated
 - A Verbose `MigrationsOption` for more logging output.
+- Possibly change the project name and `namespace`.
 
 ## [0.1.0] - 2021-11-06
 
