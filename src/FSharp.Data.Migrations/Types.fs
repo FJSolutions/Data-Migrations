@@ -8,6 +8,10 @@ type public TransactionScope =
   | NoTransaction
   member __.TransactionPerScript () =
     match __ with
+    | PerScript -> true
+    | _ -> false
+  member __.TransactionPerRun () =
+    match __ with
     | PerRun -> true
     | _ -> false
 

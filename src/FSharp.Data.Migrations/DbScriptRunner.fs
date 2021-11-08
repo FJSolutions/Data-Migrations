@@ -68,15 +68,34 @@ module DbScriptRunner =
     }
 
   let runMigrations (options:MigrationConfiguration) (con:IDbConnection) (writer: string -> unit) (scriptFiles:FileInfo list) : Result<_, string> =
-
-    // let tran = con.BeginTransaction ()
-    
+    // Internal function to recurse the file list and execute the scripts
     let rec loop (files:FileInfo list) lastResult =
-      // Test empty file list and last result
       match files, lastResult with
       | _, Error _ -> lastResult
       | [], _ -> lastResult
       | [file], _ -> loop [] <| readAndExecuteMigration options con writer file
       | file::tl, _ -> loop tl <| readAndExecuteMigration options con writer file
-                    
-    loop scriptFiles (Ok true)
+      
+    // Start a transaction if the scope is `PerRun`
+    let tran = 
+      if options.TransactionScope.TransactionPerRun () then
+        if con.State = ConnectionState.Closed then
+          con.Open ()
+
+        Some (con.BeginTransaction ())
+      else
+        None
+    
+    // Call the file list
+    let result = loop scriptFiles (Ok true)
+
+    // Process the transaction
+    match tran with
+    | None -> ()
+    | Some t -> 
+        match result with 
+        | Ok _ -> t.Commit ()
+        | Error _ -> t.Rollback ()
+
+    // Return the result
+    result

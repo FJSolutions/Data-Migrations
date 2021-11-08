@@ -1,5 +1,5 @@
 CREATE TABLE public.emails (
-  id SERIAL NOT NULL PRIMARY KEY,
+  id SERIAL NOT NULL,
   planning_center_id int NOT NULL,
   "address" varchar(256) NOT NULL,
   label varchar(256) NOT NULL,
