@@ -15,7 +15,7 @@ let main argv =
   // |> Migrator.transactionScope Migrator.NoTransaction 
 
   // Migrator read scripts
-  // |> Migrator.scriptsFolder "./migrations"
+  |> Migrator.scriptsFolder config.MigrationsFolder
 
   // Display run Result
   |> Migrator.run (new NpgsqlConnection (config.ConnectionString))

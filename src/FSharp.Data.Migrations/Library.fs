@@ -15,7 +15,7 @@ module Migrator =
   let configure () : MigrationConfiguration =
     { 
       LogWriter = Console.Out
-      ScriptFolder = Internal.normalizePath "../../../../../migrations"
+      ScriptFolder = Internal.normalizePath @"..\..\..\..\..\migrations\"
       ScriptFilterPattern = "*.sql"
       TransactionScope = PerScript
       Database = PostgreSQL()

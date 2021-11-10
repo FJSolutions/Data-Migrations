@@ -8,15 +8,21 @@ All notable changes to this project will be documented in this file.
 
 - Add the ability to run `up` and `down` migrations
   - The default should be `up` only.
-  - Identified in a script by @tags in a SQL comment
-    - `--- @UP`
-    - `--- @DOWN`
+  - Identified in a script by @tags in a SQL comment (case insensitive)
+    - `--- @UP` or multiline `/** @Up **/`
+    - `--- @DOWN` or multiline `/** @Down **/`
   - Parse the script file for `up` and `down` identifier comments
 - Logger
   - Coloured console output
     - Make the `log writer` more sophisticated
   - A Verbose `MigrationsOption` for more logging output.
 - Possibly change the project name and `namespace`.
+
+## [0.1.2] - 2021-11-10
+
+### Added
+
+- A FAKE build script to build the project.
 
 ## [0.1.1] - 2021-11-08
 
