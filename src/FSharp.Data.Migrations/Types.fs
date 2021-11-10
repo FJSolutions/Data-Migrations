@@ -2,6 +2,25 @@ namespace FSharp.Data.Migrations
 
 open System.IO
 
+type LogWriter(writer:TextWriter) =
+  member __.title (msg:string) =
+    writer.WriteLine msg
+
+  member __.success (msg:string) =
+    System.Console.ForegroundColor <- System.ConsoleColor.DarkGreen
+    writer.WriteLine $"[Success] {msg}"
+    System.Console.ResetColor ()  
+
+  member __.info (msg:string) =
+    System.Console.ForegroundColor <- System.ConsoleColor.Cyan
+    writer.WriteLine $"[Info] {msg}"
+    System.Console.ResetColor ()
+  
+  member __.error (msg:string) =
+    System.Console.ForegroundColor <- System.ConsoleColor.Red
+    writer.WriteLine $"[Error] {msg}"
+    System.Console.ResetColor ()
+
 type public TransactionScope =
   | PerScript
   | PerRun

@@ -46,9 +46,7 @@ module DbScriptRunner =
     else
       executeMigration con sql
 
-  open ResultBuilder
-
-  let private readAndExecuteMigration (options:MigrationConfiguration) (con:IDbConnection) (writer: string -> unit) (file:FileInfo) = 
+  let private readAndExecuteMigration (options:MigrationConfiguration) (con:IDbConnection) (writer: LogWriter) (file:FileInfo) = 
     result {
       // Read the contents of the script file
       let! sql = readScriptFile file
@@ -60,14 +58,14 @@ module DbScriptRunner =
         // Record it in migrations table
         let! _ = DbRunner.runRecordMigration options con file.Name
 
-        writer (sprintf "Ran migration script: %s" file.Name)
+        writer.success (sprintf "Ran migration script: %s" file.Name)
 
         return true
       else
         return! Error "An error occurred!"
     }
 
-  let runMigrations (options:MigrationConfiguration) (con:IDbConnection) (writer: string -> unit) (scriptFiles:FileInfo list) : Result<_, string> =
+  let runMigrations (options:MigrationConfiguration) (con:IDbConnection) (writer: LogWriter) (scriptFiles:FileInfo list) : Result<_, string> =
     // Internal function to recurse the file list and execute the scripts
     let rec loop (files:FileInfo list) lastResult =
       match files, lastResult with

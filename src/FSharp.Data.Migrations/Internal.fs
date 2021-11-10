@@ -18,7 +18,7 @@ module internal Internal =
 
     Path.GetFullPath basePath
 
-  let checkScriptFolderExists (path:string) =
+  let inline checkScriptFolderExists path =
     match (Directory.Exists path) with
     | true -> Ok (DirectoryInfo path)
     | false -> Error $"The scripts folder (%s{path}) doesn't exist!"
@@ -29,6 +29,7 @@ module internal Internal =
     |> List.sortBy (fun f -> f.Name)
     |> Ok
 
-  let logWriter (writer:TextWriter) (message:string) =
+
+  let createLogWriter (writer:TextWriter) =
     let writer = if not (isNull writer) then writer else TextWriter.Null
-    writer.WriteLine message
+    new LogWriter(writer)

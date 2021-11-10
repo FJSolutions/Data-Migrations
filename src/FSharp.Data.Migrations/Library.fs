@@ -6,10 +6,10 @@ open System.IO
 
 
 module Migrator =
-  let private printError writer result =
+  let inline private printError (writer:LogWriter) result =
     match result with
     | Ok _ -> ()
-    | Error e -> writer e
+    | Error e -> writer.error e
 
   ///Creates a default configuration record.
   let configure () : MigrationConfiguration =
@@ -55,8 +55,8 @@ module Migrator =
     
   ///Runs the migrations on the supplied database connection using the supplied migration options.
   let run (connection: IDbConnection) (options: MigrationConfiguration) =
-    let writer = Internal.logWriter options.LogWriter
-    writer "\n# Running Migrations\n"
+    let writer = Internal.createLogWriter options.LogWriter
+    writer.title "\n# Running Migrations\n"
     
     let result = ResultBuilder.result {
       // Verify the scripts folder exists
@@ -81,14 +81,14 @@ module Migrator =
 
       // Remove the existing scripts from the list
       let scripts = List.filter (fun (r:FileInfo) -> not (List.exists (fun f -> r.Name = f) result)) scripts 
-      writer (sprintf "%i script(s) were found to run" (List.length scripts))
+      writer.info (sprintf "%i script(s) were found to run" (List.length scripts))
       
       // Loop the scripts
       let! result = DbScriptRunner.runMigrations options connection writer scripts
       
       // Cleanup the database connection
       connection.Dispose ()
-      writer "Successfully ran migrations.\n"
+      writer.title "\nSuccessfully ran migrations.\n"
 
       return result
     } 

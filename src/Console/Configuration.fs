@@ -4,7 +4,7 @@ open Argu
 open dotenv.net
 
 type Arguments =
-  | [<CustomAppSettings "DB_CONNECTION_STRING"; AltCommandLine "-wd">] Connection_String of path:string
+  | [<CustomAppSettings "DB_CONNECTION_STRING"; AltCommandLine "-c">] Connection_String of path:string
   | [<CustomAppSettings "MIGRATIONS_FOLDER"; AltCommandLine "-m";>] Migrations_Folder of path:string
 
   interface IArgParserTemplate with 

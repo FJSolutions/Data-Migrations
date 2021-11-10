@@ -8,8 +8,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="StringBuilder.fs" />
-    <Compile Include="Internal.fs" />
     <Compile Include="Types.fs" />
+    <Compile Include="Internal.fs" />
     <Compile Include="ResultBuilder.fs" />
     <Compile Include="PostgresProvider.fs" />
     <Compile Include="DbRunner.fs" />
