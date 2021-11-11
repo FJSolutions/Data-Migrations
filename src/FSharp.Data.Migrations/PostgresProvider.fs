@@ -8,15 +8,15 @@ type PostgreSQL () =
       sb.create ()
       |> sb.add "SELECT COUNT(*) FROM information_schema.tables "
       |> sb.addSomeF "WHERE table_schema = '%s' " options.DbSchema
-      |> sb.addFIf options.DbSchema.IsSome "AND table_name = '%s' " options.DbMigrationsTableName
-      |> sb.addFIf (not options.DbSchema.IsSome) "WHERE table_name = '%s' " options.DbMigrationsTableName
+      |> sb.addFIf options.DbSchema.IsSome "AND table_name = '%s' " options.DbTableName
+      |> sb.addFIf (not options.DbSchema.IsSome) "WHERE table_name = '%s' " options.DbTableName
       |> sb.toString
 
     member __.CreateMigrationsTable options =
       sb.create ()
       |> sb.add "CREATE TABLE "
       |> sb.addSomeF "%s." options.DbSchema
-      |> sb.add options.DbMigrationsTableName
+      |> sb.add options.DbTableName
       |> sb.add "( script varchar(1024) NOT NULL PRIMARY KEY, created_at timestamp with time zone DEFAULT now() ) "
       |> sb.toString
           
@@ -24,7 +24,7 @@ type PostgreSQL () =
       sb.create ()
       |> sb.add "SELECT script FROM "
       |> sb.addSomeF "%s." options.DbSchema
-      |> sb.add options.DbMigrationsTableName
+      |> sb.add options.DbTableName
       |> sb.add " ORDER BY script" 
       |> sb.toString
 
@@ -32,6 +32,6 @@ type PostgreSQL () =
       sb.create ()
       |> sb.add"INSERT INTO "
       |> sb.addSomeF "%s." options.DbSchema
-      |> sb.add options.DbMigrationsTableName
+      |> sb.add options.DbTableName
       |> sb.add " (script, created_at) VALUES(@ScriptName, now() );"
       |> sb.toString

@@ -30,7 +30,7 @@ Target.create "Copy Files" (fun _ ->
 )
 
 Target.create "Build" (fun _ ->
-  // Update the version numbers
+  // Update the assembly version numbers
   let projFile = "src/FSharp.Data.Migrations/FSharp.Data.Migrations.fsproj"
   Xml.loadDoc(projFile) 
   |> Xml.replaceXPathInnerText "/Project/PropertyGroup/Version" version
@@ -41,8 +41,11 @@ Target.create "Build" (fun _ ->
   |> Xml.saveDoc projFile
 
   // Use the `dotnet` command line tool to build the project
-  let setParams (defaults:DotNet.BuildOptions) = 
-    { defaults with OutputPath = Some buildDir }
+  let setParams (defaults:DotNet.BuildOptions) = {
+      defaults with 
+        OutputPath = Some buildDir 
+        Configuration = DotNet.BuildConfiguration.Release
+    }
   DotNet.build setParams "src/Console/Console.fsproj" // buildDir "Build" 
 )
 

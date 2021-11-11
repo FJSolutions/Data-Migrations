@@ -1,5 +1,6 @@
 namespace FSharp.Data.Migrations
 
+open System
 open System.IO
 open System.Reflection
 
@@ -29,7 +30,23 @@ module internal Internal =
     |> List.sortBy (fun f -> f.Name)
     |> Ok
 
+  type Logger = {
+    title: string -> unit
+    info: string -> unit
+    success: string -> unit
+    error: string -> unit
+  }
 
-  let createLogWriter (writer:TextWriter) =
+  let createLogger (writer:TextWriter) =
     let writer = if not (isNull writer) then writer else TextWriter.Null
-    new LogWriter(writer)
+    let logger (writer:TextWriter) (colour:ConsoleColor) (prefix:string) (message:string) =
+      Console.ForegroundColor <- colour
+      writer.WriteLine (prefix + message)
+      Console.ResetColor ()
+
+    {
+      title = logger writer ConsoleColor.White String.Empty
+      info = logger writer ConsoleColor.Cyan "[Info] "
+      success = logger writer ConsoleColor.DarkGreen "[Success] "
+      error = logger writer ConsoleColor.Red "[Error] "
+    }

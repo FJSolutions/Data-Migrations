@@ -3,16 +3,16 @@
 open System
 open System.Data
 open System.IO
-
+open Internal
 
 module Migrator =
-  let inline private printError (writer:LogWriter) result =
+  let inline private printError (writer:Logger) result =
     match result with
     | Ok _ -> ()
     | Error e -> writer.error e
 
   ///Creates a default configuration record.
-  let configure () : MigrationConfiguration =
+  let configure () =
     { 
       LogWriter = Console.Out
       ScriptFolder = Internal.normalizePath @"..\..\..\..\..\migrations\"
@@ -20,8 +20,9 @@ module Migrator =
       TransactionScope = PerScript
       Database = PostgreSQL()
       DbSchema = Some "public"
-      DbMigrationsTableName = "migrations"
-    }
+      DbTableName = "migrations"
+      Action = Up
+    } : MigrationConfiguration
   
   /// Sets the output stream for writing migration messages to.
   /// (The default is `stdout`)
@@ -50,13 +51,13 @@ module Migrator =
 
  /// Sets the name of the migrations table where executed scripts are stored
  /// (The default is `migrations)
-  let dbMigrationsTableName tableName (options: MigrationConfiguration) =
-    { options with DbMigrationsTableName = tableName}
+  let dbTableName tableName (options: MigrationConfiguration) =
+    { options with DbTableName = tableName}
     
   ///Runs the migrations on the supplied database connection using the supplied migration options.
   let run (connection: IDbConnection) (options: MigrationConfiguration) =
-    let writer = Internal.createLogWriter options.LogWriter
-    writer.title "\n# Running Migrations\n"
+    let logger = Internal.createLogger options.LogWriter
+    logger.title "\n# Running Migrations\n"
     
     let result = ResultBuilder.result {
       // Verify the scripts folder exists
@@ -81,17 +82,17 @@ module Migrator =
 
       // Remove the existing scripts from the list
       let scripts = List.filter (fun (r:FileInfo) -> not (List.exists (fun f -> r.Name = f) result)) scripts 
-      writer.info (sprintf "%i script(s) were found to run" (List.length scripts))
+      logger.info (sprintf "%i script(s) were found to run" (List.length scripts))
       
       // Loop the scripts
-      let! result = DbScriptRunner.runMigrations options connection writer scripts
+      let! result = DbScriptRunner.runMigrations options connection logger scripts
       
       // Cleanup the database connection
       connection.Dispose ()
-      writer.title "\nSuccessfully ran migrations.\n"
+      logger.title "\nSuccessfully ran migrations.\n"
 
       return result
     } 
 
     // Prints any errors that were generated
-    printError writer result
+    printError logger result

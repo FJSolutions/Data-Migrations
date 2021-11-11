@@ -2,24 +2,6 @@ namespace FSharp.Data.Migrations
 
 open System.IO
 
-type LogWriter(writer:TextWriter) =
-  member __.title (msg:string) =
-    writer.WriteLine msg
-
-  member __.success (msg:string) =
-    System.Console.ForegroundColor <- System.ConsoleColor.DarkGreen
-    writer.WriteLine $"[Success] {msg}"
-    System.Console.ResetColor ()  
-
-  member __.info (msg:string) =
-    System.Console.ForegroundColor <- System.ConsoleColor.Cyan
-    writer.WriteLine $"[Info] {msg}"
-    System.Console.ResetColor ()
-  
-  member __.error (msg:string) =
-    System.Console.ForegroundColor <- System.ConsoleColor.Red
-    writer.WriteLine $"[Error] {msg}"
-    System.Console.ResetColor ()
 
 type public TransactionScope =
   | PerScript
@@ -34,6 +16,10 @@ type public TransactionScope =
     | PerRun -> true
     | _ -> false
 
+type Action =
+  | Up
+  | Down of number:uint8
+
 type MigrationConfiguration = {
   LogWriter: TextWriter 
   ScriptFolder: string
@@ -41,7 +27,8 @@ type MigrationConfiguration = {
   TransactionScope: TransactionScope
   Database: IMigrationDbProvider
   DbSchema: string option
-  DbMigrationsTableName: string
+  DbTableName: string
+  Action: Action
 }
 and
   /// Provides the interface for database specific Migration database providers

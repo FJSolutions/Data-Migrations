@@ -3,8 +3,9 @@ namespace FSharp.Data.Migrations
 open ResultBuilder
 open System.IO
 open System.Data
+open Internal
 
-module DbScriptRunner =
+module internal DbScriptRunner =
 
   let private readScriptFile (file:FileInfo) =
     try
@@ -46,7 +47,7 @@ module DbScriptRunner =
     else
       executeMigration con sql
 
-  let private readAndExecuteMigration (options:MigrationConfiguration) (con:IDbConnection) (writer: LogWriter) (file:FileInfo) = 
+  let private readAndExecuteMigration (options:MigrationConfiguration) (con:IDbConnection) (writer: Logger) (file:FileInfo) = 
     result {
       // Read the contents of the script file
       let! sql = readScriptFile file
@@ -65,7 +66,7 @@ module DbScriptRunner =
         return! Error "An error occurred!"
     }
 
-  let runMigrations (options:MigrationConfiguration) (con:IDbConnection) (writer: LogWriter) (scriptFiles:FileInfo list) : Result<_, string> =
+  let runMigrations (options:MigrationConfiguration) (con:IDbConnection) (writer: Logger) (scriptFiles:FileInfo list) : Result<_, string> =
     // Internal function to recurse the file list and execute the scripts
     let rec loop (files:FileInfo list) lastResult =
       match files, lastResult with
