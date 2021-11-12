@@ -99,13 +99,27 @@ module Migrator =
           let scripts = 
             List.filter (fun (r:FileInfo) -> List.exists (fun f -> r.Name = f) result) scripts 
             |> List.rev
-            |> List.take (Convert.ToInt32 n)
-
-          logger.info (sprintf "%i script(s) were found to migrate down" (List.length scripts))
+          
+          let len = 
+            match (List.length scripts), (Convert.ToInt32 n) with
+            | sl, tn when sl < tn -> sl
+            | _, tn -> tn
+          let scripts = List.take len scripts
+          logger.info (sprintf "%i script(s) were found to migrate down" len)
 
           // Loop the DOWN scripts
           DbScriptRunner.runMigrations options connection logger scripts
 
+        // List un-run migration scripts
+        | List ->
+          let scripts = List.filter (fun (r:FileInfo) -> not (List.exists (fun f -> r.Name = f) result)) scripts 
+          match List.length scripts with
+          | 0 -> logger.info "There are no un-run migration scripts"
+          | n -> 
+            logger.info (sprintf "%i script(s) were found to still migrate:" n)
+            List.map (fun (f:FileInfo) -> logger.info ("    " + f.Name)) scripts |> ignore
+
+          Ok true
       
       logger.title "\nSuccessfully ran migrations.\n"
       

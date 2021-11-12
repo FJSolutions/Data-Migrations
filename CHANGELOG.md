@@ -6,13 +6,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-- Add the ability to run `up` and `down` migrations
-  - The default should be `up` only.
-  - Identified in a script by @tags in a SQL comment (case insensitive)
-    - `--- @UP` or multiline `/** @Up **/`
-    - `--- @DOWN` or multiline `/** @Down **/`
-  - Parse the script file for `up` and `down` identifier comments
+- Info command to compare the `migrations` folder to the database.
 - Possibly change the project name and `namespace`.
+
+## [0.3.0] - 2021-11-12
+
+### Fixed
+
+- A logic bug that enabled you to try and migrate down more scripts than had been migrated up
+
+### Added
+
+- `list` command that shows the number of un-run migrations.
 
 ## [0.2.0] - 2021-11-12
 
@@ -21,6 +26,9 @@ All notable changes to this project will be documented in this file.
 - Migrations
   - Made upwards migrations the default
   - Added the ability to run a selected number of downward migrations.
+  - Scripts parses for `up` and `down` identifier comment tags (case insensitive)
+    - `--- @UP` or multiline `/** @Up **/`
+    - `--- @DOWN` or multiline `/** @Down **/`
 
 ## [0.1.3] - 2021-11-11
 

@@ -18,6 +18,7 @@ type public TransactionScope =
 type Action =
   | Up
   | Down of number:uint
+  | List
   member self.isUpAction with get() =
     match self with
     | Up -> true

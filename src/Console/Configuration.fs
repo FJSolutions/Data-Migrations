@@ -6,8 +6,9 @@ module Configuration
   type Arguments =
     | [<CustomAppSettings "DB_CONNECTION_STRING"; AltCommandLine "-c">] Connection_String of path:string
     | [<CustomAppSettings "MIGRATIONS_FOLDER"; AltCommandLine "-m";>] Migrations_Folder of path:string
-    | [<CliPrefix(CliPrefix.None); First; Unique>]Up
-    | [<CliPrefix(CliPrefix.None); First; Unique>]Down of count:uint
+    | [<CliPrefix(CliPrefix.None); First; Unique>] Up
+    | [<CliPrefix(CliPrefix.None); First; Unique>] Down of count:uint
+    | [<CliPrefix(CliPrefix.None); First; Unique>] List
     interface IArgParserTemplate with 
       member self.Usage =
         match self with
@@ -15,6 +16,7 @@ module Configuration
         | Migrations_Folder _ -> "Specifies the location the migration scripts folder."
         | Up _ -> "(default) Run all outstanding UP migrations"
         | Down _ -> "Revert <count> of run migrations"
+        | List _ -> "Displays a list of the un-migrated scripts still in the migration folder"
 
 
   let configure argv =
@@ -26,9 +28,12 @@ module Configuration
     let options = parser.Parse (inputs = argv, configurationReader = EnvironmentVariableConfigurationReader ())
 
     let action = 
-      match (options.TryGetResult Down) with
-      | Some d -> FSharp.Data.Migrations.Down d
-      | None -> FSharp.Data.Migrations.Action.Up
+      match (options.TryGetResult List) with
+      | Some _ -> FSharp.Data.Migrations.List
+      | None ->
+        match (options.TryGetResult Down) with
+        | Some d -> FSharp.Data.Migrations.Down d
+        | None -> FSharp.Data.Migrations.Action.Up
 
     // Return a record with values or default's set
     {|
