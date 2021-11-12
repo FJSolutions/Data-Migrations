@@ -1,4 +1,7 @@
 
+/*************
+*   @UP
+*************/
 CREATE TABLE public.addresses (
   id serial NOT NULL,
   planning_center_id int NOT NULL,
@@ -7,3 +10,9 @@ CREATE TABLE public.addresses (
   is_primary boolean NOT NULL DEFAULT true,
   CONSTRAINT pk_email PRIMARY KEY (id)
 );
+
+/***************
+*   @DOWN 
+****************/
+
+DROP TABLE public.addresses;

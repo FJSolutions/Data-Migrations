@@ -1,16 +1,39 @@
 namespace FSharp.Data.Migrations
 
-open ResultBuilder
+open System
 open System.IO
 open System.Data
+open ResultBuilder
 open Internal
 
 module internal DbScriptRunner =
+  open System.Text.RegularExpressions
 
-  let private readScriptFile (file:FileInfo) =
+  let private upRegex = Regex("""(--|\/\*+[\s\*]+)\s*@UP\b""", RegexOptions.ECMAScript ||| RegexOptions.IgnoreCase ||| RegexOptions.Multiline ||| RegexOptions.Compiled)
+  let private downRegex = Regex("""(--|\/\*+[\s\*]+)\s*@DOWN\b""", RegexOptions.ECMAScript ||| RegexOptions.IgnoreCase ||| RegexOptions.Multiline)
+
+  let private readScriptFile (file:FileInfo) (isUpAction:bool) =
     try
       let sql = (file.OpenText ()).ReadToEnd ()
-      Ok sql
+
+      // Identify UP and/or DOWN parts in the script
+      let m = upRegex.Match sql
+      let upPos = if m.Success then m.Index else -1
+      
+      let m = downRegex.Match sql
+      let downPos = if m.Success then m.Index else -1
+      
+      // Extract up or down parts of the script
+      match upPos,downPos with
+      | -1, -1 -> Ok sql
+      | n, -1 when n >= 0 -> Ok sql
+      | -1, n when n >= 0 -> Error $"The SQL for '{file.Name}' contains a DOWN section but no UP section"
+      | u, d -> 
+            if isUpAction then
+              Ok (sql.Substring(u, d - u))
+            else
+              Ok (sql.Substring d)
+      | _ -> Error ("The SQL statement has UP or DOWN sections defined!\n" + sql)
     with | e ->
       Error <| sprintf "Error reading script file (%s): %s" file.Name e.Message
 
@@ -47,33 +70,37 @@ module internal DbScriptRunner =
     else
       executeMigration con sql
 
-  let private readAndExecuteMigration (options:MigrationConfiguration) (con:IDbConnection) (writer: Logger) (file:FileInfo) = 
+  let private readAndExecuteUpMigration (options:MigrationConfiguration) (con:IDbConnection) (logger: Logger) (file:FileInfo) = 
     result {
       // Read the contents of the script file
-      let! sql = readScriptFile file
+      let! sql = readScriptFile file options.Action.isUpAction
 
       // Execute script 
       let! success = processMigration options con sql
 
       if success then
         // Record it in migrations table
-        let! _ = DbRunner.runRecordMigration options con file.Name
-
-        writer.success (sprintf "Ran migration script: %s" file.Name)
+        let! _ = 
+          if options.Action.isUpAction then
+            logger.success (sprintf "Ran UP migration: %s" file.Name)
+            DbRunner.addUpMigration options con file.Name
+          else
+            logger.success (sprintf "Ran DOWN migration: %s" file.Name)
+            DbRunner.removeDownMigration options con file.Name
 
         return true
       else
         return! Error "An error occurred!"
     }
 
-  let runMigrations (options:MigrationConfiguration) (con:IDbConnection) (writer: Logger) (scriptFiles:FileInfo list) : Result<_, string> =
+  let runMigrations (options:MigrationConfiguration) (con:IDbConnection) (logger: Logger) (scriptFiles:FileInfo list) : Result<_, string> =
     // Internal function to recurse the file list and execute the scripts
     let rec loop (files:FileInfo list) lastResult =
       match files, lastResult with
       | _, Error _ -> lastResult
       | [], _ -> lastResult
-      | [file], _ -> loop [] <| readAndExecuteMigration options con writer file
-      | file::tl, _ -> loop tl <| readAndExecuteMigration options con writer file
+      | [file], _ -> loop [] <| readAndExecuteUpMigration options con logger file
+      | file::tl, _ -> loop tl <| readAndExecuteUpMigration options con logger file
       
     // Start a transaction if the scope is `PerRun`
     let tran = 

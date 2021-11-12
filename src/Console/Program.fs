@@ -14,6 +14,9 @@ let main argv =
   // Migrator find scripts folder
   // |> Migrator.transactionScope Migrator.NoTransaction 
 
+  // Set the migration action
+  |> Migrator.migrationAction config.Action
+
   // Migrator read scripts
   |> Migrator.scriptsFolder config.MigrationsFolder
 

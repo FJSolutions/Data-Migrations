@@ -2,7 +2,6 @@ namespace FSharp.Data.Migrations
 
 open System.IO
 
-
 type public TransactionScope =
   | PerScript
   | PerRun
@@ -18,7 +17,15 @@ type public TransactionScope =
 
 type Action =
   | Up
-  | Down of number:uint8
+  | Down of number:uint
+  member self.isUpAction with get() =
+    match self with
+    | Up -> true
+    | _ -> false
+  member self.isDownAction with get() =
+    match self with
+    | Down _ -> true
+    | _ -> false
 
 type MigrationConfiguration = {
   LogWriter: TextWriter 
@@ -46,8 +53,15 @@ and
     abstract member GetMigrations : MigrationConfiguration -> string
     
     /// <summary>
-    /// Records a migration in the database.
+    /// Records an UP migration in the database.
     /// The parameter for the script file name must be called `@ScriptName`.
     /// </summary>
-    /// <returns>The SQL to run when a migration has successfully been executed, to record the script in the migrations table.</returns>
-    abstract member RecordMigration : MigrationConfiguration -> string
+    /// <returns>The SQL to run when an UP migration has successfully been executed, to record the script in the migrations table.</returns>
+    abstract member AddUpMigration : MigrationConfiguration -> string
+    
+    /// <summary>
+    /// Removes a DOWN migration from the database.
+    /// The parameter for the script file name must be called `@ScriptName`.
+    /// </summary>
+    /// <returns>The SQL to run when a DOWN migration has successfully executed, to remove the script in the migrations table.</returns>
+    abstract member DeleteDownMigration : MigrationConfiguration -> string

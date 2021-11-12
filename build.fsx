@@ -11,7 +11,7 @@ open Fake.IO.Globbing.Operators
 open Fake.DotNet
 
 // Properties
-let version = "0.1.2"
+let version = "0.2.0"
 let buildDir = "./build/"
 
 // *** Define Targets ***

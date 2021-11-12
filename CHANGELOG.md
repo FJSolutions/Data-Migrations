@@ -14,6 +14,14 @@ All notable changes to this project will be documented in this file.
   - Parse the script file for `up` and `down` identifier comments
 - Possibly change the project name and `namespace`.
 
+## [0.2.0] - 2021-11-12
+
+### Added
+
+- Migrations
+  - Made upwards migrations the default
+  - Added the ability to run a selected number of downward migrations.
+
 ## [0.1.3] - 2021-11-11
 
 ### Added

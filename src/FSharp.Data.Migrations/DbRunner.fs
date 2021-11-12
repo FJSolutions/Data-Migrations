@@ -58,9 +58,9 @@ module DbRunner =
     with |e ->
       Error e.Message
 
-  let runRecordMigration (options:MigrationConfiguration) (con:IDbConnection) (scriptName:string) : Result<bool, string> =
+  let addUpMigration (options:MigrationConfiguration) (con:IDbConnection) (scriptName:string) : Result<bool, string> =
     try
-      let sql = options.Database.RecordMigration options
+      let sql = options.Database.AddUpMigration options
 
       if con.State = ConnectionState.Closed then
         con.Open ()
@@ -75,6 +75,26 @@ module DbRunner =
       cmd.Parameters.Add param |> ignore
 
       Ok (cmd.ExecuteNonQuery () > 0)
+    with |e ->
+      Error e.Message
+
+  let removeDownMigration (options:MigrationConfiguration) (con:IDbConnection) (scriptName:string) : Result<bool, string> =
+    try
+      let sql = options.Database.DeleteDownMigration options
+
+      if con.State = ConnectionState.Closed then
+        con.Open ()
+      
+      let cmd = con.CreateCommand ()
+      cmd.CommandText <- sql
+
+      let param = cmd.CreateParameter ()
+      param.ParameterName <- "@ScriptName"
+      param.DbType <- DbType.String
+      param.Value <- scriptName
+      cmd.Parameters.Add param |> ignore
+
+      Ok (cmd.ExecuteNonQuery () = 0)
     with |e ->
       Error e.Message
 

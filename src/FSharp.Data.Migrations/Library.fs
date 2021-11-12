@@ -3,10 +3,9 @@
 open System
 open System.Data
 open System.IO
-open Internal
 
 module Migrator =
-  let inline private printError (writer:Logger) result =
+  let inline private printError (writer:Internal.Logger) result =
     match result with
     | Ok _ -> ()
     | Error e -> writer.error e
@@ -24,8 +23,11 @@ module Migrator =
       Action = Up
     } : MigrationConfiguration
   
-  /// Sets the output stream for writing migration messages to.
-  /// (The default is `stdout`)
+  /// Sets the action to perform (UP or DOWN).
+  /// (The default is `Up`)
+  let migrationAction (action:FSharp.Data.Migrations.Action) (options:MigrationConfiguration) =
+    { options with Action = action }
+
   let outputWriter (writer: TextWriter) (options:MigrationConfiguration) =
     { options with LogWriter = writer }
   
@@ -76,23 +78,42 @@ module Migrator =
           Ok true
         else
           DbRunner.runCreateMigrationsTable options connection
-          
+              
       // Get the list of already executed scripts
       let! result = DbRunner.runGetMigrations options connection
 
-      // Remove the existing scripts from the list
-      let scripts = List.filter (fun (r:FileInfo) -> not (List.exists (fun f -> r.Name = f) result)) scripts 
-      logger.info (sprintf "%i script(s) were found to run" (List.length scripts))
-      
-      // Loop the scripts
-      let! result = DbScriptRunner.runMigrations options connection logger scripts
-      
-      // Cleanup the database connection
-      connection.Dispose ()
-      logger.title "\nSuccessfully ran migrations.\n"
+      // Check the migration action to see what to do next
+      let! result = 
+        match options.Action with
+        // Migrate UP
+        | Up ->
+          // Remove the existing scripts from the list
+          let scripts = List.filter (fun (r:FileInfo) -> not (List.exists (fun f -> r.Name = f) result)) scripts 
+          logger.info (sprintf "%i script(s) were found to migrate up" (List.length scripts))
+          
+          // Loop the UP scripts
+          DbScriptRunner.runMigrations options connection logger scripts
+        
+        // Migrate DOWN
+        | Down n -> 
+          let scripts = 
+            List.filter (fun (r:FileInfo) -> List.exists (fun f -> r.Name = f) result) scripts 
+            |> List.rev
+            |> List.take (Convert.ToInt32 n)
 
-      return result
+          logger.info (sprintf "%i script(s) were found to migrate down" (List.length scripts))
+
+          // Loop the DOWN scripts
+          DbScriptRunner.runMigrations options connection logger scripts
+
+      
+      logger.title "\nSuccessfully ran migrations.\n"
+      
+      return result  
     } 
+      
+    // Cleanup the database connection
+    connection.Dispose ()
 
     // Prints any errors that were generated
     printError logger result
