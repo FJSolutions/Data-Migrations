@@ -2,6 +2,7 @@ namespace FSharp.Data.Migrations
 
 open System.IO
 
+/// The scope in which the migation files should be executed
 type public TransactionScope =
   | PerScript
   | PerRun
@@ -15,10 +16,12 @@ type public TransactionScope =
     | PerRun -> true
     | _ -> false
 
+/// The kind of migration action to perform 
 type Action =
   | Up
-  | Down of number:uint
+  | Down of count:uint
   | List
+  | New of name:string
   member self.isUpAction with get() =
     match self with
     | Up -> true
@@ -28,6 +31,7 @@ type Action =
     | Down _ -> true
     | _ -> false
 
+/// The migration configuration record 
 type MigrationConfiguration = {
   LogWriter: TextWriter 
   ScriptFolder: string

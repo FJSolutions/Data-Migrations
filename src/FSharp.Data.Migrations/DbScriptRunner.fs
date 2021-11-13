@@ -1,6 +1,5 @@
 namespace FSharp.Data.Migrations
 
-open System
 open System.IO
 open System.Data
 open ResultBuilder

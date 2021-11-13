@@ -6,8 +6,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-- Info command to compare the `migrations` folder to the database.
+- An `info` command
+  - To show the contents of the configuration
+  - To show all the run migration scripts
+  - To list the contents of the `migrations` folder to the database.
 - Possibly change the project name and `namespace`.
+
+## [0.4.0] - 2021-11-13
+
+### Added
+
+- A `new` command to create a script file template in the `migrations` folder.
 
 ## [0.3.0] - 2021-11-12
 

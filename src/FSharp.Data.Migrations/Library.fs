@@ -120,8 +120,13 @@ module Migrator =
             List.map (fun (f:FileInfo) -> logger.info ("    " + f.Name)) scripts |> ignore
 
           Ok true
-      
-      logger.title "\nSuccessfully ran migrations.\n"
+
+        // Create a new script template file
+        | New fileName ->
+          let fileName = ScriptTemplate.normalizeFileName options.ScriptFolder fileName
+          
+          logger.title "\nSuccessfully ran migrations.\n"
+          ScriptTemplate.createScript logger fileName
       
       return result  
     } 
