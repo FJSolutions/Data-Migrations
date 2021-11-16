@@ -25,7 +25,7 @@ module Configuration
     DotEnv.Load(DotEnvOptions(probeLevelsToSearch = 5, probeForEnv = false, ignoreExceptions = true, trimValues = true))
 
     let errorHandler = ProcessExiter(colorizer = function ErrorCode.HelpText -> None | _ -> Some System.ConsoleColor.Red)
-    let parser = ArgumentParser.Create<Arguments>(programName = "console.exe", errorHandler = errorHandler)
+    let parser = ArgumentParser.Create<Arguments>(programName = "migrate.exe", errorHandler = errorHandler)
 
     let options = parser.Parse (inputs = argv, configurationReader = EnvironmentVariableConfigurationReader ())
 

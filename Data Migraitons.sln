@@ -7,7 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{FE866A31-B63
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSharp.Data.Migrations", "src\FSharp.Data.Migrations\FSharp.Data.Migrations.fsproj", "{285A865E-0977-4512-9D0D-EE97D02F723C}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Console", "src\Console\Console.fsproj", "{8246D22C-2F79-499B-8668-1D9E68BF2FD1}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Console", "src\Migrate\Migrate.fsproj", "{8246D22C-2F79-499B-8668-1D9E68BF2FD1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

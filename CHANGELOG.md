@@ -12,8 +12,9 @@ All notable changes to this project will be documented in this file.
   - To list the contents of the `migrations` folder (and which ones have been run).
 - Possibly change the project name and default `namespace`.
 
-## [0.4.1] - 2021-11-13
+## [0.4.1] - 2021-11-16
 
+- Renamed the `Console` application to `Migrate` and set `migrate` as the main tool command.
 - Packaged the console application as a `dotnet` command `tool`.
 
 ## [0.4.0] - 2021-11-13
