@@ -6,9 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-- To show the final settings in the configuration record.
-- To show all the run migration scripts from the database.
-- To list the contents of the `migrations` folder (and which ones have been run).
+- An `info` command
+  - To show the final settings in the configuration record.
+  - To show all the run migration scripts from the database.
+  - To list the contents of the `migrations` folder (and which ones have been run).
+
+## [0.5.1] - 2021-11-16
+
+### Fixed
+
+- A layout bug in the script template
 
 ## [0.5.0] - 2021-11-16
 

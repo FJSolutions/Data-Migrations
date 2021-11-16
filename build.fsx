@@ -11,7 +11,7 @@ open Fake.IO.Globbing.Operators
 open Fake.DotNet
 
 // Properties
-let version = "0.5.0"
+let version = "0.5.1"
 let buildDir = "./build/"
 let migrateProjPath = "src/Migrate/Migrate.fsproj"
 

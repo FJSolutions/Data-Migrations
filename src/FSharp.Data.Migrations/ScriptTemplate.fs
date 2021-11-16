@@ -25,17 +25,17 @@ module internal ScriptTemplate =
 
   let createScript (logger:Logger) (fullFileName:string) =
     let template = """
-    /*************
-    *   @UP
-    *************/
+/*************
+*   @UP
+*************/
 
 
 
-    /***************
-    *   @DOWN 
-    ****************/
+/***************
+*   @DOWN 
+****************/
 
-    
+
     """
 
     try
