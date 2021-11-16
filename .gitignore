@@ -7,14 +7,10 @@ paket-files/
 .fake
 .ionide
 
-src/Console/bin/
-src/Console/obj/
-
-src/FSharp.Data.Migrations/bin/
-src/FSharp.Data.Migrations/obj/
-
-src/Tests/
-
+nupkg/
 build/
+
+src/**/bin/
+src/**/obj/
 
 .env

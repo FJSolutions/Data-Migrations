@@ -7,10 +7,14 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 - An `info` command
-  - To show the contents of the configuration
-  - To show all the run migration scripts
-  - To list the contents of the `migrations` folder to the database.
-- Possibly change the project name and `namespace`.
+  - To show the final settings in the configuration record.
+  - To show all the run migration scripts from the database.
+  - To list the contents of the `migrations` folder (and which ones have been run).
+- Possibly change the project name and default `namespace`.
+
+## [0.4.1] - 2021-11-13
+
+- Packaged the console application as a `dotnet` command `tool`.
 
 ## [0.4.0] - 2021-11-13
 
