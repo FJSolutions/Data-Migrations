@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Version>0.4.1</Version>
+    <Version>0.5.0</Version>
     <WarnOn>3390;$(WarnOn)</WarnOn>
   </PropertyGroup>
   <ItemGroup>
@@ -14,6 +14,7 @@
     <Compile Include="PostgresProvider.fs" />
     <Compile Include="DbRunner.fs" />
     <Compile Include="DbScriptRunner.fs" />
+    <Compile Include="Initialize.fs" />
     <Compile Include="ScriptTemplate.fs" />
     <Compile Include="Library.fs" />
   </ItemGroup>

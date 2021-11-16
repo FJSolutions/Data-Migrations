@@ -11,16 +11,23 @@ let main argv =
   // Get the base configuration
   Migrator.configure ()
   
-  // Migrator find scripts folder
+  // Migrator transaction scope option
   // |> Migrator.transactionScope Migrator.NoTransaction 
-
+  
   // Set the migration action
   |> Migrator.migrationAction config.Action
 
   // Migrator read scripts
   |> Migrator.scriptsFolder config.MigrationsFolder
 
+  // Set the migrations database connection
+  |> Migrator.connection (
+        match config.ConnectionString with 
+        | Some c -> Some (new NpgsqlConnection(c))
+        | None -> None
+      )
+
   // Display run Result
-  |> Migrator.run (new NpgsqlConnection (config.ConnectionString))
+  |> Migrator.run
   
   0 // return an integer exit code

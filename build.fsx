@@ -11,7 +11,7 @@ open Fake.IO.Globbing.Operators
 open Fake.DotNet
 
 // Properties
-let version = "0.4.1"
+let version = "0.5.0"
 let buildDir = "./build/"
 let migrateProjPath = "src/Migrate/Migrate.fsproj"
 
@@ -30,7 +30,7 @@ Target.create "Copy Files" (fun _ ->
   File.append (buildDir + ".env") [@"MIGRATIONS_FOLDER=..\migrations"]
 )
 
-Target.create "Build" (fun _ ->
+Target.create "Set Version" (fun _ ->
   // Update the assembly version numbers
   let projFile = "src/FSharp.Data.Migrations/FSharp.Data.Migrations.fsproj"
   Xml.loadDoc(projFile) 
@@ -40,6 +40,9 @@ Target.create "Build" (fun _ ->
   Xml.loadDoc(migrateProjPath) 
   |> Xml.replaceXPathInnerText "/Project/PropertyGroup/Version" version
   |> Xml.saveDoc migrateProjPath
+)
+
+Target.create "Build" (fun _ ->
 
   // Use the `dotnet` command line tool to build the project
   let setParams (defaults:DotNet.BuildOptions) = {
@@ -47,7 +50,7 @@ Target.create "Build" (fun _ ->
         OutputPath = Some buildDir 
         Configuration = DotNet.BuildConfiguration.Debug
     }
-  DotNet.build setParams "src/Migrate/Migrate.fsproj" // buildDir "Build" 
+  DotNet.build setParams migrateProjPath // buildDir "Build" 
 )
 
 Target.create "Nuget" (fun _ ->
@@ -65,9 +68,11 @@ open Fake.Core.TargetOperators
 
 "Clean"
   ==> "Copy Files"
+  ==> "Set Version"
   ==> "Build" 
-
-"Nuget"
+  
+"Set Version"
+  ==> "Nuget"
 
 // start build
 Target.runOrDefault "Build"

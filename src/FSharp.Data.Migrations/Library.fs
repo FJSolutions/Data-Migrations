@@ -14,8 +14,9 @@ module Migrator =
   let configure () =
     { 
       LogWriter = Console.Out
-      ScriptFolder = Internal.normalizePath @"..\..\..\..\..\migrations\"
+      ScriptFolder = Internal.normalizePath @".\migrations\"
       ScriptFilterPattern = "*.sql"
+      Connection = None
       TransactionScope = PerScript
       Database = PostgreSQL()
       DbSchema = Some "public"
@@ -27,14 +28,19 @@ module Migrator =
   /// (The default is `Up`)
   let migrationAction (action:FSharp.Data.Migrations.Action) (options:MigrationConfiguration) =
     { options with Action = action }
+  
+  let connection (con:IDbConnection option) (options:MigrationConfiguration) =
+    { options with Connection = con }
 
   let outputWriter (writer: TextWriter) (options:MigrationConfiguration) =
     { options with LogWriter = writer }
   
   /// Sets the folder to look for SQL migration scripts in.
   /// (The default is a `migrations` folder in the project root, i.e. four levels from the folder where the Entry Assembly is executing)
-  let scriptsFolder folder (options: MigrationConfiguration) =
-    { options with ScriptFolder = (Internal.normalizePath folder) }
+  let scriptsFolder (folder: string option) (options: MigrationConfiguration) =
+    match folder with 
+    | None -> options
+    | Some f -> { options with ScriptFolder = (Internal.normalizePath f) }
 
   /// Sets the file filter patter for files in the migration scripts folder
   /// (The default is `*.sql`)
@@ -57,30 +63,29 @@ module Migrator =
     { options with DbTableName = tableName}
     
   ///Runs the migrations on the supplied database connection using the supplied migration options.
-  let run (connection: IDbConnection) (options: MigrationConfiguration) =
+  let run (options: MigrationConfiguration) =
     let logger = Internal.createLogger options.LogWriter
     logger.title "\n# Running Migrations\n"
     
     let result = ResultBuilder.result {
       // Verify the scripts folder exists
-      let! result = Internal.checkScriptFolderExists (options.ScriptFolder)
-      // writer (sprintf "A migration-scripts folder was found at: '%O'" result)
+      let! result = Internal.checkScriptFolderExists options
 
       // Read migration scripts
       let! scripts = Internal.getScriptFiles options.ScriptFilterPattern result
-
+      
       // Ensure the migrations table exists & check what has been run
-      let! result = DbRunner.runCheckMigrationsTableExists options connection
+      let! result = DbRunner.runCheckMigrationsTableExists options
       
       // Create execution list
       let! _ =
         if result then 
           Ok true
         else
-          DbRunner.runCreateMigrationsTable options connection
-              
+          DbRunner.runCreateMigrationsTable options
+          
       // Get the list of already executed scripts
-      let! result = DbRunner.runGetMigrations options connection
+      let! result = DbRunner.runGetMigrations options
 
       // Check the migration action to see what to do next
       let! result = 
@@ -92,7 +97,7 @@ module Migrator =
           logger.info (sprintf "%i script(s) were found to migrate up" (List.length scripts))
           
           // Loop the UP scripts
-          DbScriptRunner.runMigrations options connection logger scripts
+          DbScriptRunner.runMigrations options logger scripts
         
         // Migrate DOWN
         | Down n -> 
@@ -108,7 +113,7 @@ module Migrator =
           logger.info (sprintf "%i script(s) were found to migrate down" len)
 
           // Loop the DOWN scripts
-          DbScriptRunner.runMigrations options connection logger scripts
+          DbScriptRunner.runMigrations options logger scripts
 
         // List un-run migration scripts
         | List ->
@@ -127,12 +132,21 @@ module Migrator =
           
           logger.title "\nSuccessfully ran migrations.\n"
           ScriptTemplate.createScript logger fileName
+
+        // Initializes the resources needed to run migrations
+        | Init -> 
+          Initialize.init options logger
+
+        // Displays all the configuration and migration informations
+        | Info -> Error "Not yet implemented!"
       
       return result  
     } 
       
     // Cleanup the database connection
-    connection.Dispose ()
+    match options.Connection with
+    | Some con -> con.Dispose ()
+    | _ -> ()
 
     // Prints any errors that were generated
     printError logger result

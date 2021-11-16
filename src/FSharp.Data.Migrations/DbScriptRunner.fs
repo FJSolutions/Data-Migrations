@@ -37,25 +37,25 @@ module internal DbScriptRunner =
       Error <| sprintf "Error reading script file (%s): %s" file.Name e.Message
 
 
-  let private executeMigration (con:IDbConnection) sql = 
+  let private executeMigration (options:MigrationConfiguration) sql = 
     try
-      if con.State = ConnectionState.Closed then
-        con.Open ()
+      if options.Connection.Value.State = ConnectionState.Closed then
+        options.Connection.Value.Open ()
 
-      let cmd = con.CreateCommand ()
+      let cmd = options.Connection.Value.CreateCommand ()
       cmd.CommandText <- sql
       cmd.ExecuteNonQuery () |> ignore
       Ok true
     with | e ->
       Error e.Message
 
-  let private transactMigration (con:IDbConnection) sql =
-    if con.State = ConnectionState.Closed then
-        con.Open ()
+  let private transactMigration (options:MigrationConfiguration) sql =
+    if options.Connection.Value.State = ConnectionState.Closed then
+        options.Connection.Value.Open ()
 
-    let transaction = con.BeginTransaction ()
+    let transaction = options.Connection.Value.BeginTransaction ()
 
-    match (executeMigration con sql) with
+    match (executeMigration options sql) with
     | Ok i -> 
               transaction.Commit ()
               Ok i
@@ -63,51 +63,51 @@ module internal DbScriptRunner =
               transaction.Rollback ()
               Error e
   
-  let private processMigration (options:MigrationConfiguration) (con:IDbConnection) sql = 
+  let private processMigration (options:MigrationConfiguration) sql = 
     if options.TransactionScope.TransactionPerScript () then
-      transactMigration con sql
+      transactMigration options sql
     else
-      executeMigration con sql
+      executeMigration options sql
 
-  let private readAndExecuteUpMigration (options:MigrationConfiguration) (con:IDbConnection) (logger: Logger) (file:FileInfo) = 
+  let private readAndExecuteUpMigration (options:MigrationConfiguration) (logger: Logger) (file:FileInfo) = 
     result {
       // Read the contents of the script file
       let! sql = readScriptFile file options.Action.isUpAction
 
       // Execute script 
-      let! success = processMigration options con sql
+      let! success = processMigration options sql
 
       if success then
         // Record it in migrations table
         let! _ = 
           if options.Action.isUpAction then
             logger.success (sprintf "Ran UP migration: %s" file.Name)
-            DbRunner.addUpMigration options con file.Name
+            DbRunner.addUpMigration options file.Name
           else
             logger.success (sprintf "Ran DOWN migration: %s" file.Name)
-            DbRunner.removeDownMigration options con file.Name
+            DbRunner.removeDownMigration options file.Name
 
         return true
       else
         return! Error "An error occurred!"
     }
 
-  let runMigrations (options:MigrationConfiguration) (con:IDbConnection) (logger: Logger) (scriptFiles:FileInfo list) : Result<_, string> =
+  let runMigrations (options:MigrationConfiguration) (logger: Logger) (scriptFiles:FileInfo list) : Result<_, string> =
     // Internal function to recurse the file list and execute the scripts
     let rec loop (files:FileInfo list) lastResult =
       match files, lastResult with
       | _, Error _ -> lastResult
       | [], _ -> lastResult
-      | [file], _ -> loop [] <| readAndExecuteUpMigration options con logger file
-      | file::tl, _ -> loop tl <| readAndExecuteUpMigration options con logger file
+      | [file], _ -> loop [] <| readAndExecuteUpMigration options logger file
+      | file::tl, _ -> loop tl <| readAndExecuteUpMigration options logger file
       
     // Start a transaction if the scope is `PerRun`
     let tran = 
       if options.TransactionScope.TransactionPerRun () then
-        if con.State = ConnectionState.Closed then
-          con.Open ()
+        if options.Connection.Value.State = ConnectionState.Closed then
+          options.Connection.Value.Open ()
 
-        Some (con.BeginTransaction ())
+        Some (options.Connection.Value.BeginTransaction ())
       else
         None
     

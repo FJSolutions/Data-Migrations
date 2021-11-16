@@ -1,6 +1,7 @@
 namespace FSharp.Data.Migrations
 
 open System.IO
+open System.Data
 
 /// The scope in which the migation files should be executed
 type public TransactionScope =
@@ -22,6 +23,8 @@ type Action =
   | Down of count:uint
   | List
   | New of name:string
+  | Init
+  | Info
   member self.isUpAction with get() =
     match self with
     | Up -> true
@@ -36,6 +39,7 @@ type MigrationConfiguration = {
   LogWriter: TextWriter 
   ScriptFolder: string
   ScriptFilterPattern: string
+  Connection:IDbConnection option
   TransactionScope: TransactionScope
   Database: IMigrationDbProvider
   DbSchema: string option

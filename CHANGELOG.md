@@ -6,15 +6,30 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- To show the final settings in the configuration record.
+- To show all the run migration scripts from the database.
+- To list the contents of the `migrations` folder (and which ones have been run).
+
+## [0.5.0] - 2021-11-16
+
+### Added
+
+- An `init` command
+  - To create the default migration folder (if it doesn't exist)
+  - To create the `.env` file it it doesn't exist
+    - To add the `migrations` folder as a parameter to the `.env` file
+    - To add the database connection to the `.env` file.
 - An `info` command
-  - To show the final settings in the configuration record.
-  - To show all the run migration scripts from the database.
-  - To list the contents of the `migrations` folder (and which ones have been run).
-- Possibly change the project name and default `namespace`.
+- Made the fluid configuration more resilient when chaining
 
 ## [0.4.1] - 2021-11-16
 
+### Fixed
+
 - Renamed the `Console` application to `Migrate` and set `migrate` as the main tool command.
+
+### Added
+
 - Packaged the console application as a `dotnet` command `tool`.
 
 ## [0.4.0] - 2021-11-13

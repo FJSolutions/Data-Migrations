@@ -2,27 +2,25 @@ namespace FSharp.Data.Migrations
 
 open System
 open System.IO
-open System.Reflection
 
 module internal Internal =
 
   let normalizePath (path:string) =
-    let (+/) path1 path2 = Path.Combine [| path1; path2|]
     let basePath = 
       match Path.IsPathRooted path with
       | true -> path
       | false -> 
-          let p = (Assembly.GetEntryAssembly ()).Location
-                  |> Directory.GetParent
-                  |> string
-          p +/ path
+          Path.Combine [| (Directory.GetCurrentDirectory ()); path |]
 
     Path.GetFullPath basePath
 
-  let inline checkScriptFolderExists path =
-    match (Directory.Exists path) with
-    | true -> Ok (DirectoryInfo path)
-    | false -> Error $"The scripts folder (%s{path}) doesn't exist!"
+  let inline checkScriptFolderExists (options:MigrationConfiguration) =
+    match (Directory.Exists options.ScriptFolder) with
+    | true -> Ok (DirectoryInfo options.ScriptFolder)
+    | false -> 
+        match options.Action with 
+        | Init -> Ok (Directory.CreateDirectory options.ScriptFolder)
+        | _ -> Error $"The scripts folder (%s{options.ScriptFolder}) doesn't exist!"
 
   let getScriptFiles (filter:string) (folder:DirectoryInfo) : Result<FileInfo list, string> =
     folder.GetFiles(filter)

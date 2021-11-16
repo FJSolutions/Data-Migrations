@@ -4,22 +4,23 @@ module Configuration
   open dotenv.net
     
   type Arguments =
-    | [<CustomAppSettings "DB_CONNECTION_STRING"; AltCommandLine "-c">] Connection_String of path:string
-    | [<CustomAppSettings "MIGRATIONS_FOLDER"; AltCommandLine "-m";>] Migrations_Folder of path:string
+    | [<CliPrefix(CliPrefix.None); First; Unique>] Init
+    | [<CliPrefix(CliPrefix.None); First; Unique>] List
     | [<CliPrefix(CliPrefix.None); First; Unique>] Up
     | [<CliPrefix(CliPrefix.None); First; Unique>] Down of count:uint
-    | [<CliPrefix(CliPrefix.None); First; Unique>] List
     | [<CliPrefix(CliPrefix.None); First; Unique>] New of file_name:string
+    | [<CustomAppSettings "CONNECTION_STRING"; AltCommandLine "-c">] Connection_String of path:string
+    | [<CustomAppSettings "MIGRATIONS_FOLDER"; AltCommandLine "-m";>] Migrations_Folder of path:string
     interface IArgParserTemplate with 
       member self.Usage =
         match self with
-        | Connection_String _ -> "The database connection string."
-        | Migrations_Folder _ -> "Specifies the location the migration scripts folder."
+        | Init _ -> "Sets up the current folder for migrations."
+        | List _ -> "Displays a list of the un-migrated scripts still in the migration folder"
         | Up _ -> "(default) Run all outstanding UP migrations"
         | Down _ -> "Revert <count> of run migrations"
-        | List _ -> "Displays a list of the un-migrated scripts still in the migration folder"
         | New _ -> "Creates a new script file in the migrations folder"
-
+        | Connection_String _ -> "The database connection string (.env: CONNECTION_STRING)."
+        | Migrations_Folder _ -> "Specifies the location the migration scripts folder (.env: MIGRATIONS_FOLDER)."
 
   let configure argv =
     DotEnv.Load(DotEnvOptions(probeLevelsToSearch = 5, probeForEnv = false, ignoreExceptions = true, trimValues = true))
@@ -38,11 +39,14 @@ module Configuration
         | None -> 
           match (options.TryGetResult New) with
           | Some f -> FSharp.Data.Migrations.New f
-          | None -> FSharp.Data.Migrations.Action.Up
+          | None -> 
+            match (options.TryGetResult Init) with
+            | Some f -> FSharp.Data.Migrations.Init
+            | None -> FSharp.Data.Migrations.Action.Up
 
     // Return a record with values or default's set
     {|
-      ConnectionString = options.GetResult Connection_String
-      MigrationsFolder = options.GetResult (Migrations_Folder, defaultValue = @"..\..\..\..\..\migrations")
+      ConnectionString = options.TryGetResult Connection_String
+      MigrationsFolder = options.TryGetResult Migrations_Folder
       Action = action
     |}
