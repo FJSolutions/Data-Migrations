@@ -11,6 +11,12 @@ All notable changes to this project will be documented in this file.
   - To show all the run migration scripts from the database.
   - To list the contents of the `migrations` folder (and which ones have been run).
 
+## [0.5.2] - 2021-11-17
+
+### Fixed
+
+- Rewrote the action logic to make it more functional.
+
 ## [0.5.1] - 2021-11-16
 
 ### Fixed

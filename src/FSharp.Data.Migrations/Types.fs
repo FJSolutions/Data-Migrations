@@ -3,7 +3,7 @@ namespace FSharp.Data.Migrations
 open System.IO
 open System.Data
 
-/// The scope in which the migation files should be executed
+/// The scope in which the migration files should be executed
 type public TransactionScope =
   | PerScript
   | PerRun

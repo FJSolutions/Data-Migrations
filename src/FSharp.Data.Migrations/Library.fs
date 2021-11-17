@@ -5,10 +5,10 @@ open System.Data
 open System.IO
 
 module Migrator =
-  let inline private printError (writer:Internal.Logger) result =
+  let inline private printFinalMessage (logger:Internal.Logger) result =
     match result with
-    | Ok _ -> ()
-    | Error e -> writer.error e
+    | Ok _ -> logger.title "\nSuccessfully ran migrations.\n"
+    | Error e -> logger.error e
 
   ///Creates a default configuration record.
   let configure () =
@@ -67,81 +67,20 @@ module Migrator =
     let logger = Internal.createLogger options.LogWriter
     logger.title "\n# Running Migrations\n"
     
-    let result = ResultBuilder.result {
-      // Verify the scripts folder exists
-      let! result = Internal.checkScriptFolderExists options
-
-      // Read migration scripts
-      let! scripts = Internal.getScriptFiles options.ScriptFilterPattern result
-      
-      // Ensure the migrations table exists & check what has been run
-      let! result = DbRunner.runCheckMigrationsTableExists options
-      
-      // Create execution list
-      let! _ =
-        if result then 
-          Ok true
-        else
-          DbRunner.runCreateMigrationsTable options
-          
-      // Get the list of already executed scripts
-      let! result = DbRunner.runGetMigrations options
-
-      // Check the migration action to see what to do next
-      let! result = 
-        match options.Action with
-        // Migrate UP
-        | Up ->
-          // Remove the existing scripts from the list
-          let scripts = List.filter (fun (r:FileInfo) -> not (List.exists (fun f -> r.Name = f) result)) scripts 
-          logger.info (sprintf "%i script(s) were found to migrate up" (List.length scripts))
-          
-          // Loop the UP scripts
-          DbScriptRunner.runMigrations options logger scripts
-        
-        // Migrate DOWN
-        | Down n -> 
-          let scripts = 
-            List.filter (fun (r:FileInfo) -> List.exists (fun f -> r.Name = f) result) scripts 
-            |> List.rev
-          
-          let len = 
-            match (List.length scripts), (Convert.ToInt32 n) with
-            | sl, tn when sl < tn -> sl
-            | _, tn -> tn
-          let scripts = List.take len scripts
-          logger.info (sprintf "%i script(s) were found to migrate down" len)
-
-          // Loop the DOWN scripts
-          DbScriptRunner.runMigrations options logger scripts
-
-        // List un-run migration scripts
-        | List ->
-          let scripts = List.filter (fun (r:FileInfo) -> not (List.exists (fun f -> r.Name = f) result)) scripts 
-          match List.length scripts with
-          | 0 -> logger.info "There are no un-run migration scripts"
-          | n -> 
-            logger.info (sprintf "%i script(s) were found to still migrate:" n)
-            List.map (fun (f:FileInfo) -> logger.info ("    " + f.Name)) scripts |> ignore
-
-          Ok true
-
-        // Create a new script template file
-        | New fileName ->
-          let fileName = ScriptTemplate.normalizeFileName options.ScriptFolder fileName
-          
-          logger.title "\nSuccessfully ran migrations.\n"
-          ScriptTemplate.createScript logger fileName
-
-        // Initializes the resources needed to run migrations
-        | Init -> 
-          Initialize.init options logger
-
-        // Displays all the configuration and migration informations
-        | Info -> Error "Not yet implemented!"
-      
-      return result  
-    } 
+    let result = 
+      match options.Action with
+      // Initializes the resources needed to run migrations
+      | Init -> ActionRunner.init options logger
+      // Migrate UP
+      | Up -> ActionRunner.up options logger
+      // Migrate DOWN
+      | Down n -> ActionRunner.down options logger n
+      // List un-run migration scripts
+      | List -> ActionRunner.list options logger
+      // Create a new script template file
+      | New fileName -> ActionRunner.newScript options logger fileName
+      // Displays all the configuration and migration informations
+      | Info -> Error "Not yet implemented!"
       
     // Cleanup the database connection
     match options.Connection with
@@ -149,4 +88,4 @@ module Migrator =
     | _ -> ()
 
     // Prints any errors that were generated
-    printError logger result
+    printFinalMessage logger result

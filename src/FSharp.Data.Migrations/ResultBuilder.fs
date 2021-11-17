@@ -1,6 +1,7 @@
 namespace FSharp.Data.Migrations
 
 module ResultBuilder =
+  open System
 
   let bind f m = Result.bind f m
 
@@ -20,6 +21,10 @@ module ResultBuilder =
         __.ReturnFrom (body ())
       finally
         f () 
+
+    member __.Using (disposable:IDisposable) f =
+      __.TryFinally(f, disposable.Dispose)
+
     member __.Delay (f) = f ()
 
   let result = ResultBuilder()

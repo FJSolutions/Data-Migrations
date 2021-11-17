@@ -5,6 +5,13 @@ open System.IO
 
 module internal Internal =
 
+  type Logger = {
+    title: string -> unit
+    info: string -> unit
+    success: string -> unit
+    error: string -> unit
+  }
+
   let normalizePath (path:string) =
     let basePath = 
       match Path.IsPathRooted path with
@@ -14,13 +21,15 @@ module internal Internal =
 
     Path.GetFullPath basePath
 
-  let inline checkScriptFolderExists (options:MigrationConfiguration) =
-    match (Directory.Exists options.ScriptFolder) with
-    | true -> Ok (DirectoryInfo options.ScriptFolder)
+  let inline checkScriptFolderExists (scriptsFolder:string) (logger:Logger) (create:bool) =
+    match (Directory.Exists scriptsFolder) with
+    | true -> Ok (DirectoryInfo scriptsFolder)
     | false -> 
-        match options.Action with 
-        | Init -> Ok (Directory.CreateDirectory options.ScriptFolder)
-        | _ -> Error $"The scripts folder (%s{options.ScriptFolder}) doesn't exist!"
+        if create then
+          logger.info $"Created migrations folder: {scriptsFolder}"
+          Ok (Directory.CreateDirectory scriptsFolder)
+        else
+          Error $"The scripts folder (%s{scriptsFolder}) doesn't exist!"
 
   let getScriptFiles (filter:string) (folder:DirectoryInfo) : Result<FileInfo list, string> =
     folder.GetFiles(filter)
@@ -28,12 +37,6 @@ module internal Internal =
     |> List.sortBy (fun f -> f.Name)
     |> Ok
 
-  type Logger = {
-    title: string -> unit
-    info: string -> unit
-    success: string -> unit
-    error: string -> unit
-  }
 
   let createLogger (writer:TextWriter) =
     let writer = if not (isNull writer) then writer else TextWriter.Null
